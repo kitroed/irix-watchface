@@ -9,7 +9,7 @@ static char date_buffer[16], clock_buffer[32];
 
 static float hour_hand_angle = 0, minute_hand_angle = 0;
 
-static GSize minute_hand_rect = GSize(70, 70);
+static GSize minute_hand_rect = GSize(71, 71);
 static GSize hour_hand_rect = GSize(51, 51);
 static GPoint clock_center = GPoint(136, 110);
 static GRect minute_hand_bounds, hour_hand_bounds;
