@@ -1,0 +1,53 @@
+{
+  "name": "irix",
+  "author": "bcaluneo",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "IRIX",
+    "uuid": "a4af7d9b-d062-4ade-a447-2876e5cb4029",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "capabilities": [
+      "health"
+    ],
+    "targetPlatforms": [
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "CAN_CHIME_FLAG"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "img/icon.png",
+          "menuIcon": true
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_BG",
+          "file": "img/bg_pebble.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_BT",
+          "file": "img/bt.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_CHARGING",
+          "file": "img/charging.png"
+        }
+      ]
+    }
+  }
+}
