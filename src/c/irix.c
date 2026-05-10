@@ -6,22 +6,13 @@
 #include "panels/stats.h"
 #include "panels/toolchest.h"
 #include "panels/xclock.h"
+#include "panels/background.h"
 
 static Window* s_window;
-
-static BitmapLayer* bg_track_layer;
-static GBitmap* bg_bitmap;
-static Layer* canvas;
 
 static void battery_state_handler(BatteryChargeState charge) {
     tick_toolchest();
     tick_stats();
-}
-
-static void update_bg_canvas(Layer* layer, GContext* ctx) {
-    GRect bounds = layer_get_bounds(layer);
-    graphics_context_set_fill_color(ctx, get_bg_color());
-    graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
 static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
@@ -30,8 +21,6 @@ static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
     tick_toolchest();
     tick_xclock();
     tick_pblview();
-
-    layer_mark_dirty(canvas);
 
     time_t now = time(NULL);
     struct tm* local_time = localtime(&now);
@@ -55,20 +44,7 @@ static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
 }
 
 static void prv_window_load(Window* window) {
-    Layer* window_layer = window_get_root_layer(window);
-    GRect bounds = layer_get_bounds(window_layer);
-
-    canvas = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
-    layer_set_update_proc(canvas, update_bg_canvas);
-
-    bg_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BG);
-    bg_track_layer = bitmap_layer_create(bounds);
-    bitmap_layer_set_bitmap(bg_track_layer, bg_bitmap);
-    bitmap_layer_set_compositing_mode(bg_track_layer, GCompOpSet);
-
-    layer_add_child(window_layer, canvas);
-    layer_add_child(window_layer, bitmap_layer_get_layer(bg_track_layer));
-
+    load_bg(window);
     load_toolchest(window);
     load_xclock(window);
     load_pblview(window);
@@ -76,10 +52,7 @@ static void prv_window_load(Window* window) {
 }
 
 static void prv_window_unload(Window* window) {
-    layer_destroy(canvas);
-    gbitmap_destroy(bg_bitmap);
-    bitmap_layer_destroy(bg_track_layer);
-
+    unload_bg(window);
     unload_toolchest(window);
     unload_xclock(window);
     unload_pblview(window);

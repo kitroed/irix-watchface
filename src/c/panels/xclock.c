@@ -7,7 +7,8 @@
 #define CLOCK_Y_OFFSET 32
 
 static Layer* canvas;
-static TextLayer *date_text_layer, *clock_text_layer;
+static TextLayer *date_text_layer, *clock_text_layer, *large_clock_text_layer,
+    *large_date_text_layer;
 static char date_buffer[16], clock_buffer[32];
 
 static float hour_hand_angle = 0, minute_hand_angle = 0;
@@ -38,7 +39,33 @@ static int addntl_offsets[12][2] = {
     {0, 0}   // 11
 };
 
-void redraw_xclock() { layer_mark_dirty(canvas); }
+void redraw_xclock() {
+    if (get_clock_display_mode() == ANALOG) {
+        clock_center = GPoint(136, 82);
+    } else {
+        clock_center = GPoint(136, 110);
+    }
+
+    minute_hand_bounds = GRect(clock_center.x - (minute_hand_rect.w / 2),
+                               clock_center.y - (minute_hand_rect.h / 2),
+                               minute_hand_rect.w, minute_hand_rect.h);
+
+    hour_hand_bounds = GRect(clock_center.x - (hour_hand_rect.w / 2),
+                             clock_center.y - (hour_hand_rect.h / 2),
+                             hour_hand_rect.w, hour_hand_rect.h);
+
+    layer_set_hidden(canvas, get_clock_display_mode() == DIGITAL);
+
+    layer_set_hidden(text_layer_get_layer(large_clock_text_layer),
+                     get_clock_display_mode() != DIGITAL);
+    layer_set_hidden(text_layer_get_layer(large_date_text_layer),
+                     get_clock_display_mode() != DIGITAL);
+
+    layer_set_hidden(text_layer_get_layer(date_text_layer),
+                     get_clock_display_mode() != BOTH);
+    layer_set_hidden(text_layer_get_layer(clock_text_layer),
+                     get_clock_display_mode() != BOTH);
+}
 
 void update_clock_canvas(Layer* layer, GContext* ctx) {
     graphics_context_set_compositing_mode(ctx, GCompOpSet);
@@ -133,7 +160,14 @@ void tick_xclock() {
     if (clock_is_24h_style()) {
         strftime(clock_buffer, sizeof(clock_buffer), "%H:%M ", local_time);
     } else {
-        strftime(clock_buffer, sizeof(clock_buffer), "%I:%M %p ", local_time);
+        memset(clock_buffer, 0, sizeof(clock_buffer));
+
+        char hour_tmp[8], minutes_tmp[8];
+        snprintf(hour_tmp, sizeof(hour_tmp), "%d", local_hour);
+        strftime(minutes_tmp, sizeof(minutes_tmp), ":%M %p ", local_time);
+
+        strcat(clock_buffer, hour_tmp);
+        strcat(clock_buffer, minutes_tmp);
     }
 
     strcat(clock_buffer, local_time->tm_isdst > 0 ? "DST" : "");
@@ -141,17 +175,13 @@ void tick_xclock() {
     strftime(date_buffer, sizeof(date_buffer), "%a %m/%d", local_time);
     text_layer_set_text(clock_text_layer, clock_buffer);
     text_layer_set_text(date_text_layer, date_buffer);
+    text_layer_set_text(large_clock_text_layer, clock_buffer);
+    text_layer_set_text(large_date_text_layer, date_buffer);
+    
+    redraw_xclock();
 }
 
 void load_xclock(Window* window) {
-    minute_hand_bounds = GRect(clock_center.x - (minute_hand_rect.w / 2),
-                               clock_center.y - (minute_hand_rect.h / 2),
-                               minute_hand_rect.w, minute_hand_rect.h);
-
-    hour_hand_bounds = GRect(clock_center.x - (hour_hand_rect.w / 2),
-                             clock_center.y - (hour_hand_rect.h / 2),
-                             hour_hand_rect.w, hour_hand_rect.h);
-
     Layer* window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
 
@@ -160,8 +190,27 @@ void load_xclock(Window* window) {
     date_text_layer =
         text_layer_create(GRect(CLOCK_X_OFFSET, CLOCK_Y_OFFSET + 13, 103, 20));
 
+    large_clock_text_layer =
+        text_layer_create(GRect(CLOCK_X_OFFSET, CLOCK_Y_OFFSET, 103, 35));
+    large_date_text_layer =
+        text_layer_create(GRect(CLOCK_X_OFFSET, CLOCK_Y_OFFSET + 25, 103, 35));
+
     text_layer_set_text(clock_text_layer, "N/A");
     text_layer_set_text(date_text_layer, "N/A");
+    text_layer_set_text(large_clock_text_layer, "N/A");
+    text_layer_set_text(large_date_text_layer, "N/A");
+
+    text_layer_set_background_color(large_clock_text_layer, GColorClear);
+    text_layer_set_text_color(large_clock_text_layer, GColorBlack);
+    text_layer_set_font(large_clock_text_layer,
+                        fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(large_clock_text_layer, GTextAlignmentCenter);
+
+    text_layer_set_background_color(large_date_text_layer, GColorClear);
+    text_layer_set_text_color(large_date_text_layer, GColorBlack);
+    text_layer_set_font(large_date_text_layer,
+                        fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(large_date_text_layer, GTextAlignmentCenter);
 
     text_layer_set_background_color(clock_text_layer, GColorClear);
     text_layer_set_text_color(clock_text_layer, GColorBlack);
@@ -181,6 +230,8 @@ void load_xclock(Window* window) {
     layer_add_child(window_layer, canvas);
     layer_add_child(window_layer, text_layer_get_layer(clock_text_layer));
     layer_add_child(window_layer, text_layer_get_layer(date_text_layer));
+    layer_add_child(window_layer, text_layer_get_layer(large_clock_text_layer));
+    layer_add_child(window_layer, text_layer_get_layer(large_date_text_layer));
 
     tick_xclock();
 }
@@ -189,4 +240,6 @@ void unload_xclock(Window* window) {
     layer_destroy(canvas);
     text_layer_destroy(clock_text_layer);
     text_layer_destroy(date_text_layer);
+    text_layer_destroy(large_clock_text_layer);
+    text_layer_destroy(large_date_text_layer);
 }

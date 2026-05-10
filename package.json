@@ -45,6 +45,16 @@
         },
         {
           "type": "bitmap",
+          "name": "IMAGE_BG_DIGITAL",
+          "file": "img/bg_pebble_digital.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_BG_ANALOG",
+          "file": "img/bg_pebble_analog.png"
+        },
+        {
+          "type": "bitmap",
           "name": "IMAGE_BT",
           "file": "img/bt.png"
         },

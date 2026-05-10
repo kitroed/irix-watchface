@@ -1,8 +1,9 @@
 #include "messaging.h"
 
 #include "../config/settings.h"
-#include "../panels/xclock.h"
+#include "../panels/background.h"
 #include "../panels/toolchest.h"
+#include "../panels/xclock.h"
 
 void inbox_received(DictionaryIterator* iter, void* context) {
     Tuple* bg_color = dict_find(iter, MESSAGE_KEY_BG_COLOR);
@@ -18,23 +19,25 @@ void inbox_received(DictionaryIterator* iter, void* context) {
 
     if (bg_color) {
         set_bg_color(GColorFromHEX(bg_color->value->int32));
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "bg_color = %d", get_bg_color());
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated bg_color to %d.", get_bg_color());
     }
 
     if (clock_hands_color) {
         set_clock_hands_color(GColorFromHEX(clock_hands_color->value->int32));
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "clock_hands_color = %d",
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated clock_hands_color to %d.",
                 get_clock_hands_color());
-
-        redraw_xclock();
-        light_enable_interaction();
     }
 
     if (xclock_disp_mode) {
         set_clock_display_mode(atoi(xclock_disp_mode->value->cstring));
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "clock_display_mode = %d",
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated clock_display_mode to %d.",
                 get_clock_display_mode());
     }
+
+    redraw_bg();
+    update_clock_bg();
+    redraw_xclock();
+    light_enable_interaction();
 
     save_settings();
 }
