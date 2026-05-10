@@ -1,14 +1,16 @@
 #include <pebble.h>
 
-#include "stats.h"
-#include "pblview.h"
-#include "toolchest.h"
-#include "xclock.h"
+#include "config/settings.h"
+#include "messaging/messaging.h"
+#include "panels/pblview.h"
+#include "panels/stats.h"
+#include "panels/toolchest.h"
+#include "panels/xclock.h"
 
 static Window* s_window;
 
-static BitmapLayer *bg_track_layer;
-static GBitmap *bg_bitmap;
+static BitmapLayer* bg_track_layer;
+static GBitmap* bg_bitmap;
 static Layer* canvas;
 
 static void battery_state_handler(BatteryChargeState charge) {
@@ -16,12 +18,10 @@ static void battery_state_handler(BatteryChargeState charge) {
     tick_stats();
 }
 
-static void update_proc(Layer* layer, GContext* ctx) {
-    graphics_context_set_compositing_mode(ctx, GCompOpSet);
-
-    // BMC TODO Introduce the ability to configure the background color.
-    redraw_xclock(ctx);
-    redraw_pblview(ctx);
+static void update_bg_canvas(Layer* layer, GContext* ctx) {
+    GRect bounds = layer_get_bounds(layer);
+    graphics_context_set_fill_color(ctx, get_bg_color());
+    graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
 static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
@@ -59,14 +59,15 @@ static void prv_window_load(Window* window) {
     GRect bounds = layer_get_bounds(window_layer);
 
     canvas = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
-    layer_set_update_proc(canvas, update_proc);
+    layer_set_update_proc(canvas, update_bg_canvas);
 
     bg_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BG);
     bg_track_layer = bitmap_layer_create(bounds);
     bitmap_layer_set_bitmap(bg_track_layer, bg_bitmap);
+    bitmap_layer_set_compositing_mode(bg_track_layer, GCompOpSet);
 
-    layer_add_child(window_layer, bitmap_layer_get_layer(bg_track_layer));
     layer_add_child(window_layer, canvas);
+    layer_add_child(window_layer, bitmap_layer_get_layer(bg_track_layer));
 
     load_toolchest(window);
     load_xclock(window);
@@ -100,11 +101,17 @@ static void prv_init(void) {
     battery_state_service_subscribe(battery_state_handler);
 
     tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+
+    app_message_register_inbox_received(inbox_received);
+    app_message_register_inbox_dropped(inbox_dropped);
+    app_message_open(128, 128);
 }
 
 static void prv_deinit(void) { window_destroy(s_window); }
 
 int main(void) {
+    load_settings();
+
     prv_init();
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p",

@@ -1,5 +1,8 @@
 #include "toolchest.h"
 
+#include "../config/settings.h"
+#include "../utils.h"
+
 static TextLayer *steps_text_layer, *heartrate_text_layer, *distance_temp_layer,
     *bat_text_layer;
 
@@ -10,21 +13,6 @@ static char steps_buffer[16], bpm_buffer[16], distance_buffer[16],
 #define CELL_WIDTH 68
 
 static int CELL_Y_OFFSETS[4] = {32, 58, 84, 110};
-
-HealthValue get_health_metric_value(HealthMetric metric) {
-    if (metric == HealthMetricHeartRateBPM) {
-        return health_service_peek_current_value(metric);
-    }
-
-    time_t then = time_start_of_today();
-    time_t now = time(NULL);
-
-    if (!(health_service_metric_accessible(metric, then, now) &
-          HealthServiceAccessibilityMaskAvailable))
-        return -1;
-
-    return (int)health_service_sum_today(metric);
-}
 
 void tick_toolchest() {
     int step_count = get_health_metric_value(HealthMetricStepCount);
@@ -46,12 +34,21 @@ void tick_toolchest() {
     if (distance <= 0) {
         snprintf(distance_buffer, sizeof(distance_buffer), "%s", "N/A");
     } else {
-        float miles = distance / 1609.344;
-        int whole = (int)miles;
-        int part = (miles - whole) * 100;
+        enum DistanceUnit distance_unit = get_distance_unit();
 
-        snprintf(distance_buffer, sizeof(distance_buffer), "%d.%dmi", whole,
-                 part);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "distance = %d", distance);
+
+        if (distance_unit == IMPERIAL) {
+            print_float(distance_buffer, sizeof(distance_buffer),
+                        distance / 1609.344, 2);
+            strcat(distance_buffer, "mi");
+        } else if (distance < 1000) {
+            snprintf(distance_buffer, sizeof(distance_buffer), "%dm", distance);
+        } else {
+            print_float(distance_buffer, sizeof(distance_buffer),
+                        distance / 1000.0, 2);
+            strcat(distance_buffer, "km");
+        }
     }
 
     snprintf(bat_buffer, sizeof(bat_buffer), "%d%%",

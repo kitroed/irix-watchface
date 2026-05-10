@@ -1,9 +1,12 @@
 #include "xclock.h"
-#include "utils.h"
+
+#include "../config/settings.h"
+#include "../utils.h"
 
 #define CLOCK_X_OFFSET 85
 #define CLOCK_Y_OFFSET 32
 
+static Layer* canvas;
 static TextLayer *date_text_layer, *clock_text_layer;
 static char date_buffer[16], clock_buffer[32];
 
@@ -31,9 +34,13 @@ static int addntl_offsets[12][2] = {
     {0, 0}   // 11
 };
 
-void redraw_xclock(GContext* ctx) {
+void redraw_xclock() { layer_mark_dirty(canvas); }
+
+void update_clock_canvas(Layer* layer, GContext* ctx) {
+    graphics_context_set_compositing_mode(ctx, GCompOpSet);
+
     // BMC TODO, this could probably use some refactoring.
-    
+
     // Calcuate the point along the clock's circle where the tip of the hand
     // should point.
     GPoint minute_hand_point =
@@ -95,7 +102,7 @@ void redraw_xclock(GContext* ctx) {
     GPath* minute_hand = gpath_create(&minute_path_info);
     GPath* hour_hand = gpath_create(&hour_path_info);
 
-    graphics_context_set_fill_color(ctx, GColorVividCerulean);
+    graphics_context_set_fill_color(ctx, get_clock_hands_color());
     gpath_draw_filled(ctx, minute_hand);
     gpath_draw_filled(ctx, hour_hand);
 
@@ -146,6 +153,7 @@ void load_xclock(Window* window) {
                              hour_hand_rect.w, hour_hand_rect.h);
 
     Layer* window_layer = window_get_root_layer(window);
+    GRect bounds = layer_get_bounds(window_layer);
 
     clock_text_layer =
         text_layer_create(GRect(CLOCK_X_OFFSET, CLOCK_Y_OFFSET, 103, 20));
@@ -167,6 +175,10 @@ void load_xclock(Window* window) {
                         fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
     text_layer_set_text_alignment(date_text_layer, GTextAlignmentCenter);
 
+    canvas = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
+    layer_set_update_proc(canvas, update_clock_canvas);
+
+    layer_add_child(window_layer, canvas);
     layer_add_child(window_layer, text_layer_get_layer(clock_text_layer));
     layer_add_child(window_layer, text_layer_get_layer(date_text_layer));
 
@@ -174,6 +186,7 @@ void load_xclock(Window* window) {
 }
 
 void unload_xclock(Window* window) {
+    layer_destroy(canvas);
     text_layer_destroy(clock_text_layer);
     text_layer_destroy(date_text_layer);
 }

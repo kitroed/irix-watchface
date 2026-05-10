@@ -1,5 +1,6 @@
 /build
 /doc
+/node_modules
 makefile
 .lock-waf_linux2_build
 .lock-waf_linux2_build
