@@ -12,8 +12,12 @@ static char date_buffer[16], clock_buffer[32];
 
 static float hour_hand_angle = 0, minute_hand_angle = 0;
 
-static GSize minute_hand_rect = GSize(71, 71);
-static GSize hour_hand_rect = GSize(51, 51);
+static const GSize minute_hand_rect = GSize(71, 71);
+static const GSize hour_hand_rect = GSize(51, 51);
+
+static const float HAND_BASE_OFFSET = 2.0f;
+static const float HAND_BASE_HALF_WIDTH = 6.5f;
+
 static GPoint clock_center = GPoint(136, 110);
 static GRect minute_hand_bounds, hour_hand_bounds;
 
@@ -63,22 +67,18 @@ void update_clock_canvas(Layer* layer, GContext* ctx) {
     float minute_mag = my_sqrt(minute_dx * minute_dx + minute_dy * minute_dy);
     float hour_mag = my_sqrt(hour_dx * hour_dx + hour_dy * hour_dy);
 
-    // Half of the triangle's base.
-    float half_width = 6.5f;
-
     // Calculate the offset we need to apply so that the normal vector's create
     // a triangle with the base size we want.
-    int minute_x = (int)((-minute_dy / minute_mag) * half_width);
-    int minute_y = (int)((minute_dx / minute_mag) * half_width);
-    int hour_x = (int)((-hour_dy / hour_mag) * half_width);
-    int hour_y = (int)((hour_dx / hour_mag) * half_width);
+    int minute_x = (int)((-minute_dy / minute_mag) * HAND_BASE_HALF_WIDTH);
+    int minute_y = (int)((minute_dx / minute_mag) * HAND_BASE_HALF_WIDTH);
+    int hour_x = (int)((-hour_dy / hour_mag) * HAND_BASE_HALF_WIDTH);
+    int hour_y = (int)((hour_dx / hour_mag) * HAND_BASE_HALF_WIDTH);
 
     // Calculate an offset to move the center from the bottom of the triangle.
-    float pivot_offset = 2.0f;
-    int minute_ox = (int)(minute_dx / minute_mag * pivot_offset);
-    int minute_oy = (int)(minute_dy / minute_mag * pivot_offset);
-    int hour_ox = (int)(hour_dx / hour_mag * pivot_offset);
-    int hour_oy = (int)(hour_dy / hour_mag * pivot_offset);
+    int minute_ox = (int)(minute_dx / minute_mag * HAND_BASE_OFFSET);
+    int minute_oy = (int)(minute_dy / minute_mag * HAND_BASE_OFFSET);
+    int hour_ox = (int)(hour_dx / hour_mag * HAND_BASE_OFFSET);
+    int hour_oy = (int)(hour_dy / hour_mag * HAND_BASE_OFFSET);
 
     // Construct the path info containing the three points of each triangle.
     GPathInfo minute_path_info = {
