@@ -150,7 +150,9 @@ void tick_xclock() {
     minute_hand_angle = local_time->tm_min * (360.0f / 60.0f);
     hour_hand_angle = (local_time->tm_hour * (360.0f / 12.0f)) +
                       (local_time->tm_min * (30.0f / 60.0f));
+    
     local_hour = local_time->tm_hour % 12;
+    if (local_hour == 0) local_hour = 12;
 
     APP_LOG(APP_LOG_LEVEL_INFO,
             "clock info: minutes = %d, minute_hand_angle = %d, hour_hand_angle "
