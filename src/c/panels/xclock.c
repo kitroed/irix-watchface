@@ -151,8 +151,11 @@ void tick_xclock() {
     hour_hand_angle = (local_time->tm_hour * (360.0f / 12.0f)) +
                       (local_time->tm_min * (30.0f / 60.0f));
     
+    // Keep local_hour in 0..11 so it stays a valid index into addntl_offsets
+    // (the table has 12 entries; index 0 represents "12 o'clock", per the
+    // comments in the array). The 12-hour digital print converts 0 -> 12
+    // separately below.
     local_hour = local_time->tm_hour % 12;
-    if (local_hour == 0) local_hour = 12;
 
     APP_LOG(APP_LOG_LEVEL_INFO,
             "clock info: minutes = %d, minute_hand_angle = %d, hour_hand_angle "
@@ -165,7 +168,8 @@ void tick_xclock() {
         memset(clock_buffer, 0, sizeof(clock_buffer));
 
         char hour_tmp[8], minutes_tmp[8];
-        snprintf(hour_tmp, sizeof(hour_tmp), "%d", local_hour);
+        int display_hour = local_hour == 0 ? 12 : local_hour;
+        snprintf(hour_tmp, sizeof(hour_tmp), "%d", display_hour);
         strftime(minutes_tmp, sizeof(minutes_tmp), ":%M %p ", local_time);
 
         strcat(clock_buffer, hour_tmp);
