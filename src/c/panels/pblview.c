@@ -8,10 +8,10 @@
 #define NUM_COLUMNS (BAR_WIDTH / METRIC_WIDTH)  // 42
 
 // How far back to scan for HR samples. Sized so that even at the watch's
-// slowest "every 10 minutes" sampling cadence we can still collect ~48
-// valid readings and fill the whole bar. Bumping this further is cheap
-// (12 bytes per minute, sits in .bss).
-#define LOOKBACK_MINUTES 480  // 8 hours
+// slowest "every 10 minutes" sampling cadence we can comfortably overfill
+// the 42-column bar. Bumping this further is cheap (12 bytes per minute,
+// sits in .bss).
+#define LOOKBACK_MINUTES 600  // 10 hours
 
 static Layer* canvas;
 static TextLayer *cpu_text_layer, *title_text_layer;
