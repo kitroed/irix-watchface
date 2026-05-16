@@ -28,7 +28,8 @@
       "XCLOCK_MODE",
       "BG_COLOR",
       "CLOCK_HANDS_COLOR",
-      "DISTANCE_UNIT"
+      "DISTANCE_UNIT",
+      "HOURLY_CHIME_MODE"
     ],
     "resources": {
       "media": [

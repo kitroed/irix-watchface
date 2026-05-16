@@ -15,6 +15,23 @@ static void battery_state_handler(BatteryChargeState charge) {
     tick_stats();
 }
 
+// Pulse N times, once per hour on a 12-hour cycle (so 13:00 -> 1 pulse,
+// 00:00 -> 12 pulses, mantel-clock style). Pattern buffer is static so it
+// outlives the enqueue call.
+static void chime_hourly_count(int hour_24) {
+    int n = hour_24 % 12;
+    if (n == 0) n = 12;
+
+    static uint32_t segments[23];  // 12 on-pulses + 11 gaps
+    for (int i = 0; i < n; i++) {
+        segments[2 * i] = 180;
+        if (i < n - 1) segments[2 * i + 1] = 250;
+    }
+    VibePattern pattern = {.durations = segments,
+                           .num_segments = (uint32_t)(2 * n - 1)};
+    vibes_enqueue_custom_pattern(pattern);
+}
+
 static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "tick_handler called.");
 
@@ -31,10 +48,20 @@ static void tick_handler(struct tm* tick_time, TimeUnits units_changed) {
     APP_LOG(APP_LOG_LEVEL_INFO, "before: can_chime_flag = %d", can_chime);
 
     if (time_to_chime && can_chime) {
-        vibes_double_pulse();
+        enum HourlyChimeMode mode = get_hourly_chime_mode();
+        switch (mode) {
+            case CHIME_OFF:
+                break;
+            case CHIME_DOUBLE_PULSE:
+                vibes_double_pulse();
+                break;
+            case CHIME_HOURLY_COUNT:
+                chime_hourly_count(local_time->tm_hour);
+                break;
+        }
         can_chime = 0;
         APP_LOG(APP_LOG_LEVEL_INFO,
-                "Ringing hourly chime and setting can_chime to false.");
+                "Hourly chime fired (mode=%d), can_chime cleared.", mode);
     } else if (!time_to_chime) {
         can_chime = 1;
         APP_LOG(APP_LOG_LEVEL_INFO, "Cleared can_chime flag for next hour.");

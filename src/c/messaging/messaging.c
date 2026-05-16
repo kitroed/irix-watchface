@@ -10,11 +10,18 @@ void inbox_received(DictionaryIterator* iter, void* context) {
     Tuple* clock_hands_color = dict_find(iter, MESSAGE_KEY_CLOCK_HANDS_COLOR);
     Tuple* xclock_disp_mode = dict_find(iter, MESSAGE_KEY_XCLOCK_MODE);
     Tuple* distance_unit = dict_find(iter, MESSAGE_KEY_DISTANCE_UNIT);
+    Tuple* hourly_chime_mode = dict_find(iter, MESSAGE_KEY_HOURLY_CHIME_MODE);
 
     if (distance_unit) {
         set_distance_unit(atoi(distance_unit->value->cstring));
         APP_LOG(APP_LOG_LEVEL_DEBUG, "distance_unit = %d", get_distance_unit());
         tick_toolchest();
+    }
+
+    if (hourly_chime_mode) {
+        set_hourly_chime_mode(atoi(hourly_chime_mode->value->cstring));
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "hourly_chime_mode = %d",
+                get_hourly_chime_mode());
     }
 
     if (bg_color) {

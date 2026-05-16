@@ -58,6 +58,26 @@ module.exports = [
         ],
         defaultValue: "1"
       },
+      {
+        type: "radiogroup",
+        messageKey: "HOURLY_CHIME_MODE",
+        label: "Hourly Chime",
+        options: [
+          {
+            "label": "Off",
+            "value": "0"
+          },
+          {
+            "label": "Double pulse",
+            "value": "1"
+          },
+          {
+            "label": "Count of hour",
+            "value": "2"
+          }
+        ],
+        defaultValue: "1"
+      },
     ],
   },
   {
